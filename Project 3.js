@@ -37,8 +37,10 @@ piece = piece.concat(drawShape3D(0, 5, 0, 0.5, pieceSides, 2*Math.PI, 0));
 piece.push(vec4(0,4.5,0,1));
 piece = piece.concat(drawShape3D(0, 4.5, 0, 0.5, pieceSides, 2*Math.PI, 0));
 
-var hoverSpace = 1;
+var hoverSpace = 2;
 var selectedSpace = null;
+
+var gameBoard = [];
 
 window.onload = function init()
 {
@@ -46,6 +48,8 @@ window.onload = function init()
     
     gl = WebGLUtils.setupWebGL( canvas );
     if ( !gl ) { alert( "WebGL isn't available" ); }
+
+    initializeBoard();
 
 	// Load vertices and colors for board faces
 	
@@ -317,17 +321,17 @@ function render()
 	//Draw Triangles
 	for (var i=0; i<24; i++){
 		if((i/12) < 1){
-			if(i === selectedSpace - 1){
+			if(i === selectedSpace - 2){
 				gl.uniform4fv (colorLoc, colors[5]);
-			} else if (i === hoverSpace - 1){
+			} else if (i === hoverSpace - 2){
 				gl.uniform4fv (colorLoc, colors[4]);
 			} else {
 				gl.uniform4fv (colorLoc, colors[(i%2) + 2]);
 			}
 		} else {
-			if(i ===  36 - selectedSpace){
+			if(i ===  37 - selectedSpace){
 				gl.uniform4fv (colorLoc, colors[5]);
-			} else if (i === 36 - hoverSpace){
+			} else if (i === 37 - hoverSpace){
 				gl.uniform4fv (colorLoc, colors[4]);
 			} else {
 				gl.uniform4fv (colorLoc, colors[3 -(i%2)]);
@@ -369,4 +373,25 @@ function drawShape3D(x, y, z, length, sides, fullAngle, startAngle) {
         shape.push(vec4(x + Math.cos(startAngle+disp*i)*length, y, z + Math.sin(startAngle+disp*i)*length, 1.0));
     }
     return shape;
+}
+
+
+//Notes on gameBoard
+//gameBoard[0] is black's bar space
+//gameBoard[1] is white's home space
+//gameBoard[26] is black's home space
+//gameBoard[27] is white's bar space
+
+//color 0 is black
+//color 1 is white
+function initializeBoard() {
+	gameBoard = [];
+	gameBoard[2] = {color:0,amount:2};
+	gameBoard[7] = {color:1,amount:5};
+	gameBoard[9] = {color:1,amount:3};
+	gameBoard[13] = {color:0,amount:5};
+	gameBoard[14] = {color:1,amount:5};
+	gameBoard[18] = {color:0,amount:3};
+	gameBoard[20] = {color:0,amount:5};
+	gameBoard[25] = {color:1,amount:2};
 }
