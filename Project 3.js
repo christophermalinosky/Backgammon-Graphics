@@ -37,6 +37,9 @@ piece = piece.concat(drawShape3D(0, 5, 0, 0.5, pieceSides, 2*Math.PI, 0));
 piece.push(vec4(0,4.5,0,1));
 piece = piece.concat(drawShape3D(0, 4.5, 0, 0.5, pieceSides, 2*Math.PI, 0));
 
+var hoverSpace = 1;
+var selectedSpace = null;
+
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
@@ -91,7 +94,9 @@ window.onload = function init()
 	 	colorVecFromRGB(205,133,63), // brown
 	 	vec4(1.0, 1.0, 1.0, 1.0),  // white
 	 	vec4(0.0, 0.0, 0.0, 1.0),  // black
-	    vec4(1.0, 0.0, 0.0, 1.0)  // red
+	    vec4(1.0, 0.0, 0.0, 1.0),  // red
+	    vec4(1.0, 1.0, 0.0, 1.0), // yellow
+	    vec4(0.0, 1.0, 0.0, 1.0) // green
 	];
 
 	// Load indices to represent the triangles that will draw each face
@@ -209,6 +214,28 @@ window.onload = function init()
 	var d=document.getElementById ("Reset");
 	d.addEventListener ("click", function () { theta = [0.0, 0.0, 0.0]; axis = xAxis });
 
+	// Set up key listener
+	window.onkeyup = function(e) {
+	   var keyCode = e.keyCode ? e.keyCode : e.which;
+	   console.log(keyCode);
+	   if (keyCode === 37) { //left
+	   		if(hoverSpace !== 0){
+	   			hoverSpace--;
+	   		}
+	   } else if (keyCode === 39) { //right
+	       if(hoverSpace !== 25){
+	   			hoverSpace++;
+	   		}
+	   } else if (keyCode === 13) { //enter
+	   		if(selectedSpace === null){
+	   			selectedSpace = hoverSpace;
+	   		} else {
+	   			//do a movement
+	   			selectedSpace = null;
+	   		}
+	   }
+	}
+
     //  Load shaders and initialize attribute buffers
     
     var program = initShaders( gl, "vertex-shader", "fragment-shader" );
@@ -289,7 +316,11 @@ function render()
 
 	//Draw Triangles
 	for (var i=0; i<24; i++){
-		if((i/12) < 1){
+		if(i === selectedSpace - 1){
+			gl.uniform4fv (colorLoc, colors[5]);
+		} else if(i === hoverSpace - 1){
+			gl.uniform4fv (colorLoc, colors[4]);
+		} else if((i/12) < 1){
 			gl.uniform4fv (colorLoc, colors[(i%2) + 2]);
 		} else {
 			gl.uniform4fv (colorLoc, colors[3 -(i%2)]);
