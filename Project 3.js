@@ -217,7 +217,6 @@ window.onload = function init()
 	// Set up key listener
 	window.onkeyup = function(e) {
 	   var keyCode = e.keyCode ? e.keyCode : e.which;
-	   console.log(keyCode);
 	   if (keyCode === 37) { //left
 	   		if(hoverSpace !== 0){
 	   			hoverSpace--;
@@ -234,6 +233,7 @@ window.onload = function init()
 	   			selectedSpace = null;
 	   		}
 	   }
+	   console.log(35-hoverSpace);
 	}
 
     //  Load shaders and initialize attribute buffers
@@ -316,14 +316,22 @@ function render()
 
 	//Draw Triangles
 	for (var i=0; i<24; i++){
-		if(i === selectedSpace - 1){
-			gl.uniform4fv (colorLoc, colors[5]);
-		} else if(i === hoverSpace - 1){
-			gl.uniform4fv (colorLoc, colors[4]);
-		} else if((i/12) < 1){
-			gl.uniform4fv (colorLoc, colors[(i%2) + 2]);
+		if((i/12) < 1){
+			if(i === selectedSpace - 1){
+				gl.uniform4fv (colorLoc, colors[5]);
+			} else if (i === hoverSpace - 1){
+				gl.uniform4fv (colorLoc, colors[4]);
+			} else {
+				gl.uniform4fv (colorLoc, colors[(i%2) + 2]);
+			}
 		} else {
-			gl.uniform4fv (colorLoc, colors[3 -(i%2)]);
+			if(i ===  36 - selectedSpace){
+				gl.uniform4fv (colorLoc, colors[5]);
+			} else if (i === 36 - hoverSpace){
+				gl.uniform4fv (colorLoc, colors[4]);
+			} else {
+				gl.uniform4fv (colorLoc, colors[3 -(i%2)]);
+			}
 		}
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_BYTE, currentBufferIndex + 3*i );
 		tempBufferIndex += 3;
