@@ -3,15 +3,6 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 <title>Project 3</title>
-
-<p>
-<button id="XButton">Rotate x-axis</button>
-<button id="YButton">Rotate y-axis</button>
-<button id="ZButton">Rotate z-axis</button>
-<button id="Pause">Pause</button>
-<button id="Reset">Reset angles</button>
-</p>
-
 <script id="vertex-shader" type="x-shader/x-vertex">
 attribute vec4 vPosition;
 uniform   mat4 modelView;
@@ -41,8 +32,17 @@ main()
 <script type="text/javascript" src="./Common/MV.js"></script>
 <script type="text/javascript" src="Project 3.js"></script>
 </head>   
-
 <body>
+
+<p>
+<button id="XButton">Rotate x-axis</button>
+<button id="YButton">Rotate y-axis</button>
+<button id="ZButton">Rotate z-axis</button>
+<button id="Pause">Pause</button>
+<button id="Reset">Reset angles</button>
+<button id="Roll">Roll Dice</button>
+</p>
+
 <canvas id="gl-canvas" width="800" height="800">
 Oops ... your browser doesn't support the HTML5 canvas element
 </canvas>

@@ -1,9 +1,12 @@
+var loopdebug = 0;
+var loopdebug2 = 0;
 
 var canvas;
 var gl;
 var colorLoc;
 var modelViewLoc;
 var projectionLoc;
+var diceHeight = 0.4;
 
 var vertices = [];
 var colors = [];
@@ -12,6 +15,29 @@ var theta = [];
 var angles  = [];
 var c = [];
 var s = [];
+
+// dice object - keeps track of meta info about dice
+// more info stored, but not initialized here
+var dice = {
+	active: false,	//are dice rolling?
+	rolled: [6 , 6], //rolled value
+	aniLength: 0,
+	animate: {
+
+	}
+}
+
+// base vertecies for dice (untransformed)
+var dice_init = [
+	[-diceHeight, -diceHeight, diceHeight, 1.0],
+	[-diceHeight, diceHeight, diceHeight, 1.0],
+	[diceHeight, diceHeight, diceHeight, 1.0],
+	[diceHeight, -diceHeight, diceHeight, 1.0],
+	[-diceHeight, -diceHeight, -diceHeight, 1.0],
+	[-diceHeight, diceHeight, -diceHeight, 1.0],
+	[diceHeight, diceHeight, -diceHeight, 1.0],
+	[diceHeight, -diceHeight, -diceHeight, 1.0]
+];
 
 var boardHeight = 2;
 var boardSideLength  = 10;
@@ -94,13 +120,18 @@ window.onload = function init()
 	//Add vertices for piece
 	vertices = vertices.concat(piece);
 
-	 colors = [
+	//This is where dice vertices will go
+	dice.vPos = vertices.length;
+
+	//Set colors
+	colors = [
 	 	colorVecFromRGB(205,133,63), // brown
 	 	vec4(1.0, 1.0, 1.0, 1.0),  // white
 	 	vec4(0.0, 0.0, 0.0, 1.0),  // black
 	    vec4(1.0, 0.0, 0.0, 1.0),  // red
 	    vec4(1.0, 1.0, 0.0, 1.0), // yellow
-	    vec4(0.0, 1.0, 0.0, 1.0) // green
+	    vec4(0.0, 1.0, 0.0, 1.0), // green
+	 	vec4(0.9, 0.9, 0.9, 0.9)  // off-white
 	];
 
 	// Load indices to represent the triangles that will draw each face
@@ -192,6 +223,15 @@ window.onload = function init()
 		}
 		indices.push(startingIndex + i + 1);
 	}
+
+	// Dice indicies. 
+	//First elems of indices describe a cube, so we're just going to copy those and offset them
+	for (i = 0; i < 36; i++) //dice1
+		indices.push(dice.vPos + indices[i]);
+	for (i = 0; i < 36; i++) //dice2
+		indices.push(8  + dice.vPos + indices[i]);
+
+	console.log(indices);
 	
 	theta[0] = 0.0;
 	theta[1] = 0.0;
@@ -207,16 +247,38 @@ window.onload = function init()
 	// projection = ortho (windowMin, windowMax, windowMin, windowMax, windowMin, windowMax+boardSideLength);
 	// Register event listeners for the buttons
 	
-	var a=document.getElementById ("XButton");
-	a.addEventListener ("click", function() { axis = xAxis; });
-	var b=document.getElementById ("YButton");
-	b.addEventListener ("click", function () { axis = yAxis; });
-	var c=document.getElementById ("ZButton");
-	c.addEventListener ("click", function () { axis = zAxis; });
-	var e=document.getElementById ("Pause");
-	e.addEventListener ("click", function () { axis = null; });
-	var d=document.getElementById ("Reset");
-	d.addEventListener ("click", function () { theta = [0.0, 0.0, 0.0]; axis = xAxis });
+	//
+	// Set event listeners
+	//
+	document.getElementById("XButton")
+		.addEventListener ("click", function() { 
+			axis = xAxis; 
+		});
+	document.getElementById("YButton")
+		.addEventListener ("click", function () { 
+			axis = yAxis; 
+		});
+	document.getElementById("ZButton")
+		.addEventListener ("click", function () { 
+			axis = zAxis; 
+		});
+	document.getElementById("Pause")
+		.addEventListener ("click", function () { 
+			axis = null; 
+		});
+	document.getElementById("Reset")
+		.addEventListener ("click", function () { 
+			theta = [0.0, 0.0, 0.0]; axis = xAxis 
+		});
+	document.getElementById("Roll")
+		.addEventListener("click", function() {
+			dice.active = true;
+			dice.startTime = c_time();
+			dice.rolled = [
+				Math.floor((Math.random() * 6) + 1),
+				Math.floor((Math.random() * 6) + 1)
+			];
+		});
 
 	// Set up key listener
 	window.onkeyup = function(e) {
@@ -251,7 +313,7 @@ window.onload = function init()
 	
     var vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(vertices), gl.STATIC_DRAW );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(getVertices()), gl.STATIC_DRAW );
 
     var vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
@@ -267,7 +329,16 @@ window.onload = function init()
 function render()
 {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    //update board position
 	theta[axis] += 0.3;
+
+	//update dice if we need to - seperate function becuase theres a lot to do
+	if (dice.active)
+		rollDiceTick();
+
+	//update buffers
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(getVertices()), gl.STATIC_DRAW );
 	
 	for (i=0; i<3; i++) {
 		angles[i] = radians(theta[i]);
@@ -359,7 +430,17 @@ function render()
 	currentBufferIndex += tempBufferIndex;
 	tempBufferIndex = 0;
 
-	requestAnimFrame (render);
+	if (loopdebug2++ < 3) 
+		console.log("Before dice: ", currentBufferIndex, "Need to draw: ", 72, "Index Size: ", indices.length, "B+D=", currentBufferIndex + 72);
+
+	//Draw dice
+	gl.uniform4fv(colorLoc, colors[5]);
+	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, currentBufferIndex); //dice1
+	currentBufferIndex += 36;
+	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, currentBufferIndex); //dice2
+	currentBufferIndex += 36;
+
+	requestAnimFrame(render);
 };
 
 function colorVecFromRGB(red, green, blue){
@@ -394,4 +475,90 @@ function initializeBoard() {
 	gameBoard[18] = {color:0,amount:3};
 	gameBoard[20] = {color:0,amount:5};
 	gameBoard[25] = {color:1,amount:2};
+}
+
+
+// Does one animation tick for the dice roll animation. Only called if dice are actively rolling
+function rollDiceTick() {
+	console.log("Dice roll tick");
+	//do animation stuff
+	dice.lastTime = c_time();
+	dice.active = (dice.aniLength > (dice.lastTime - dice.startTime));
+}
+
+// Shorthand to get time as milliseconds since last epoch
+function c_time() {
+	return (new Date().getTime());
+}
+
+//////////////// Dice stuff
+
+// Vertices + Dice vertices
+function getVertices() {
+	let dice1 = dice_init.slice(), dice2 = dice_init.slice();
+	//if no start time -> not been rolled yet. put in a default position
+	if (!(dice.startTime)) {
+		//add dice1
+		return vertices
+			.concat( translateDice(dice1, 4, boardHeight + (diceHeight / 2), 5) )
+			.concat( translateDice(dice2, 6, boardHeight + (diceHeight / 2), 5) );
+	}
+	else {
+		console.log("Compute dice animation frame");
+		return vertices;
+	}
+
+	// Here are some functions to do translation / rotation since I don't want to use a matrix library and it's easier to just write these based on a matrix than use an actual m4 device
+
+	// Translates a dice
+	function translateDice(d, x, y, z) {
+		for (i = 0; i < d.length; i++) {	
+			d[i] = vec4(d[i][0] + x, d[i][1] + y, d[i][2] + z, d[i][3]);
+		}
+		if (loopdebug++ < 5)
+			console.log("Dice:", JSON.stringify(d), "(x,y,z): ", x, y, z);
+		return d;
+	}
+
+	// Rotates t times around x-axis
+	function rotateDiceX(d, t) {
+		let r = (2 * t) * Math.PI;
+		let c = Math.cos(), s = Math.sin(r);
+		for (i = 0; i < d.length; i++) {
+			d[i] = vec4(
+				d[i][0],
+				(d[i][1]*c) + (d[i][2]*s),
+				(d[i][1]*-s) + (d[i][2]*c),
+				d[i][3]);
+		}
+		return d;
+	}
+
+	// Rotates t times around y-axis
+	function rotateDiceY(d, t) {
+		let r = (2 * t) * Math.PI;
+		let c = Math.cos(), s = Math.sin(r);
+		for (i = 0; i < d.length; i++) {
+			d[i] = vec4(
+				(d[i][0]*c) + (d[i][2]*-s),
+				d[i][1],
+				(d[i][0]*s) + (d[i][2]*c),
+				d[i][3]);
+		}
+		return d;
+	}
+
+	// Rotates t times around z-axis
+	function rotateDiceZ(d, t) {
+		let r = (2 * t) * Math.PI;
+		let c = Math.cos(), s = Math.sin(r);
+		for (i = 0; i < d.length; i++) {
+			d[i] = vec4(
+				(d[i][0]*c) + (d[i][1]*-s),
+				(d[i][0]*s) + (d[i][1]*c),
+				d[i][2],
+				d[i][3]);
+		}
+		return d;
+	}
 }
