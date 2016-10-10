@@ -444,14 +444,10 @@ function render()
 	let currentBufferIndex = 0;
 	let tempBufferIndex = 0;
 	gl.uniform4fv (colorLoc, colors[0]);
-	for (let i = 0; i<6; i++) {
-		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 6*i );
-		tempBufferIndex += 6;
-	}
-	currentBufferIndex += tempBufferIndex;
-	tempBufferIndex = 0;
+	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
+	currentBufferIndex = 36*2;
 
-	//Draw Triangles
+	// Draw Triangles
 	for (let i =0; i<24; i++){
 		if((i/12) < 1){
 			if(i === selectedSpace - 2){
@@ -470,8 +466,8 @@ function render()
 				gl.uniform4fv (colorLoc, colors[3 -(i%2)]);
 			}
 		}
-		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 3*i );
-		tempBufferIndex += 3;
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6*i );
+		tempBufferIndex += 6;
 	}
 	currentBufferIndex += tempBufferIndex;
 	tempBufferIndex = 0;
@@ -479,23 +475,23 @@ function render()
 	//Draw background
 	gl.uniform4fv (colorLoc, colors[1]);
 	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 3;
+	currentBufferIndex += 6;
 	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 3;
+	currentBufferIndex += 6;
 
 	//Draw dice
 	gl.uniform4fv(colorLoc, colors[5]);
 	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, currentBufferIndex); //dice1
-	currentBufferIndex += 36;
+	currentBufferIndex += 36*2;
 	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, currentBufferIndex); //dice2
-	currentBufferIndex += 36;
+	currentBufferIndex += 36*2;
 
 	//Draw black pieces
 	
 	gl.uniform4fv (colorLoc, colors[2]);
 	for (let j = 0; j < ( 15 * ((pieceSides - 1) * 4)); j++) {
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-		currentBufferIndex += 3;
+		currentBufferIndex += 6;
 	}
 
 	//Draw red pieces
@@ -503,7 +499,7 @@ function render()
 	gl.uniform4fv (colorLoc, colors[3]);
 	for (let j = 0; j < ( 15 * ((pieceSides - 1) * 4)); j++) {
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-		currentBufferIndex += 3;
+		currentBufferIndex += 6;
 	}
 
 	requestAnimFrame(render);
@@ -582,12 +578,12 @@ function getVertices() {
 			.concat( getRedPieces() );
 	}
 
-	//gets verticies of all black pieces
+	//gets verticies of a5ll black pieces
 	function getBlackPieces() {
 		let pieces = [];
 		for (let i = 0; i < 15; i++) {
 			pieces = pieces.concat(
-				translateObject(piece.slice(), i / 2, 5, 10 - Math.floor(i / 5))
+				translateObject(piece.slice(), 2, 2, 2)
 			);
 		}
 		return pieces;
