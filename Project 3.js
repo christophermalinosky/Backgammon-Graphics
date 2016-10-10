@@ -18,13 +18,93 @@ var s = [];
 
 // dice object - keeps track of meta info about dice
 // more info stored, but not initialized here
+// dice default position: <4 or 6>, boardHeight + diceHeight = 2.4, 5
 var dice = {
 	active: false,	//are dice rolling?
 	rolled: [6 , 6], //rolled value
-	aniLength: 0,
+	aniLength: 2000,
 	animate: {
+		times: [0, 500, 1000, 1250, 1500, 1750, 2000],
+		x: [
+			{v: 0, r: 0}, //v = value (position), r = total # of rotations
+			{v: 2, r: 0.75},
+			{v: 3, r: 1.5},
+			{v: 4, r: 1.5},
+			{v: 5, r: 2.5},
+			{v: 4.5, r: 2.75},
+			{v: 4, r: 3}
+		],
+		y: [
+			{v: 7.2, r: 0}, 
+			{v: 4.2, r: 0.75},
+			{v: 2.4, r: 1.5},
+			{v: 4.2, r: 1.0},
+			{v: 2.4, r: 0.5},
+			{v: 3.7, r: 0.75},
+			{v: 2.4, r: 1}
+		],
+		z: [
+			{v: 3, r: 0}, 
+			{v: 4, r: 0.5},
+			{v: 5, r: 1},
+			{v: 5.5, r: -0.25},
+			{v: 6, r: -0.5},
+			{v: 5.5, r: 0.25},
+			{v: 5, r: 1}
+		],
+	},
+	animate2: {
+		times: [0, 500, 1000, 1500, 1750, 2000],
+		x: [
+			{v: 0, r: 0}, //v = value (position), r = total # of rotations
+			{v: 2, r: 0.75},
+			{v: 4, r: 1.5},
+			{v: 5, r: 2.5},
+			{v: 5.5, r: 2.75},
+			{v: 6, r: 3}
+		],
+		y: [
+			{v: 6.4, r: 0}, 
+			{v: 8.4, r: 1},
+			{v: 6.4, r: 2},
+			{v: 2.4, r: 3},
+			{v: 3.4, r: 2.5},
+			{v: 2.4, r: 2}
+		],
+		z: [
+			{v: 6, r: 0}, 
+			{v: 5.5, r: 1},
+			{v: 5, r: 2},
+			{v: 4.5, r: 3},
+			{v: 4.75, r: 2.5},
+			{v: 5, r: 2}
+		],
+	},
+	getFrame: function(time, animate) {
+			let i;
+			for (i = 0; i < animate.times.length; i++) {
+				if (animate.times[i] > time)
+					break;
+			} 
+			if (i == animate.times.length) i--;
+			//times[i] is to next frame, times[i-1] is what we are coming from
+			let xv1 = animate.x[i-1].v, xr1 = animate.x[i-1].r, 
+				yv1 = animate.y[i-1].v, yr1 = animate.y[i-1].r, 
+				zv1 = animate.z[i-1].v, zr1 = animate.z[i-1].r,
+				xv2 = animate.x[i].v, xr2 = animate.x[i].r, 
+				yv2 = animate.y[i].v, yr2 = animate.y[i].r, 
+				zv2 = animate.z[i].v, zr2 = animate.z[i].r,
+				tRatio = (time - animate.times[i-1]) / (animate.times[i] - animate.times[i-1]);
 
-	}
+			return {
+				xv: xv1 + (tRatio * (xv2 - xv1)),
+				xr: xr1 + (tRatio * (xr2 - xr1)),
+				yv: yv1 + (tRatio * (yv2 - yv1)),
+				yr: yr1 + (tRatio * (yr2 - yr1)),
+				zv: zv1 + (tRatio * (zv2 - zv1)),
+				zr: zr1 + (tRatio * (zr2 - zr1))
+			}				
+		}
 }
 
 // base vertecies for dice (untransformed)
@@ -56,12 +136,14 @@ var projection;
 var modelView;
 var aspect;
 
+//design basic piece
 var piece = [];
 var pieceSides = 20;
-piece.push(vec4(0,5,0,1));
-piece = piece.concat(drawShape3D(0, 5, 0, 0.5, pieceSides, 2*Math.PI, 0));
-piece.push(vec4(0,4.5,0,1));
-piece = piece.concat(drawShape3D(0, 4.5, 0, 0.5, pieceSides, 2*Math.PI, 0));
+var pieceHeight = 0.5;
+piece.push(vec4(0,pieceHeight,0,1));
+piece = piece.concat(drawShape3D(0, pieceHeight, 0, 0.5, pieceSides, 2*Math.PI, 0));
+piece.push(vec4(0,0,0,1));
+piece = piece.concat(drawShape3D(0, 0, 0, 0.5, pieceSides, 2*Math.PI, 0));
 
 var hoverSpace = 2;
 var selectedSpace = null;
@@ -116,9 +198,6 @@ window.onload = function init()
 	vertices.push(vec4(boardSideLength - triangleWidth,backgroundZ,triangleWidth,1.0));
 	vertices.push(vec4(triangleWidth,backgroundZ,boardSideLength - triangleWidth,1.0));
 	vertices.push(vec4(boardSideLength - triangleWidth,backgroundZ,boardSideLength - triangleWidth,1.0));
-
-	//Add vertices for piece
-	vertices = vertices.concat(piece);
 
 	//This is where dice vertices will go
 	dice.vPos = vertices.length;
@@ -175,55 +254,6 @@ window.onload = function init()
 	indices.push(61);
 	indices.push(59);
 
-	//Add indexes for a game piece
-	let pieceSize = piece.length;
-	let startingIndex = 62;
-
-	//Top
-	for(let i = 0; i < pieceSize/2 - 1; i++){
-		indices.push(startingIndex);
-		indices.push(startingIndex + i + 1);
-		if(i === pieceSize/2 - 2){
-			indices.push(startingIndex + 1);
-		} else {
-			indices.push(startingIndex + i + 2);
-		}
-	}
-
-	//Sides
-	startingIndex += 1;
-	for(let i = 0; i < pieceSize/2 - 1; i++){
-		indices.push(startingIndex + i);
-		indices.push(startingIndex + i + pieceSize/2);
-		if(i === pieceSize/2 - 2){
-			indices.push(startingIndex + pieceSize/2);
-		} else {
-			indices.push(startingIndex + i + pieceSize/2 + 1);
-		}
-
-		indices.push(startingIndex + i);
-		if(i === pieceSize/2 - 2){
-			indices.push(startingIndex + pieceSize/2);
-			indices.push(startingIndex);
-		} else {
-			indices.push(startingIndex + i + pieceSize/2 + 1);
-			indices.push(startingIndex + i + 1);
-		}
-	}
-	startingIndex -= 1;
-
-	//Bottom
-	startingIndex += piece.length/2;
-	for(let i = 0; i < pieceSize/2 - 1; i++){
-		indices.push(startingIndex);
-		if(i === pieceSize/2 - 2){
-			indices.push(startingIndex + 1);
-		} else {
-			indices.push(startingIndex + i + 2);
-		}
-		indices.push(startingIndex + i + 1);
-	}
-
 	// Dice indicies. 
 	//First elems of indices describe a cube, so we're just going to copy those and offset them
 	for (i = 0; i < 36; i++) //dice1
@@ -231,7 +261,39 @@ window.onload = function init()
 	for (i = 0; i < 36; i++) //dice2
 		indices.push(8  + dice.vPos + indices[i]);
 
+	// Pieces indicies 
+	let base, base2, // base = start of piece, base2 = start of piece bottom
+		piece_vcount = 2 + (2 * pieceSides);
+	for (let i = 0; i < 30; i++) { // index 30 pieces
+		base = (dice.vPos + 16) + (i * piece_vcount);
+		base2 = base + pieceSides + 1;
+		console.log("Base: ", base, "\tBase2: ", base2);
+		for (let j = 1; j < pieceSides; j++) {
+			//top triangle
+			indices.push(base);
+			indices.push(base + j);
+			indices.push(base + j + 1);
+			console.log("TOP: (", base, ',', base + j, ',', base + j + 1, ")");
+			//bottom triangle
+			indices.push(base2);
+			indices.push(base2 + j);
+			indices.push(base2 + j + 1);
+			console.log("BOT: (", base2, ',', base2 + j, ',', base2 + j + 1, ")");
+			//side rectangle (2x triangles)
+			indices.push(base + j);
+			indices.push(base + j + 1);
+			indices.push(base2 + j);
+
+			indices.push(base + j + 1);
+			indices.push(base2 + j);
+			indices.push(base2 + j + 1);
+			console.log("SIDE: (", base + j, ',', base + j + 1, ',', base2 + j, ") (", base + j + 1, ',', base2 + j, ',', base2 + j + 1, ')');
+		}
+	}
+
 	console.log(indices);
+
+	// Set pieces indicies
 	
 	theta[0] = 0.0;
 	theta[1] = 0.0;
@@ -321,7 +383,7 @@ window.onload = function init()
 	
 	var iBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
-	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(indices), gl.STATIC_DRAW);
+	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 	
     render();
 };
@@ -381,16 +443,16 @@ function render()
 	//Draw board
 	let currentBufferIndex = 0;
 	let tempBufferIndex = 0;
-	for (var i=0; i<6; i++) {
-		gl.uniform4fv (colorLoc, colors[0]);
-		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 6*i );
+	gl.uniform4fv (colorLoc, colors[0]);
+	for (let i = 0; i<6; i++) {
+		gl.drawElements( gl.TRIANGLES, 6, gl.UNSIGNED_SHORT, 6*i );
 		tempBufferIndex += 6;
 	}
 	currentBufferIndex += tempBufferIndex;
 	tempBufferIndex = 0;
 
 	//Draw Triangles
-	for (var i=0; i<24; i++){
+	for (let i =0; i<24; i++){
 		if((i/12) < 1){
 			if(i === selectedSpace - 2){
 				gl.uniform4fv (colorLoc, colors[5]);
@@ -408,7 +470,7 @@ function render()
 				gl.uniform4fv (colorLoc, colors[3 -(i%2)]);
 			}
 		}
-		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_BYTE, currentBufferIndex + 3*i );
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 3*i );
 		tempBufferIndex += 3;
 	}
 	currentBufferIndex += tempBufferIndex;
@@ -416,29 +478,33 @@ function render()
 
 	//Draw background
 	gl.uniform4fv (colorLoc, colors[1]);
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_BYTE, currentBufferIndex);
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 	currentBufferIndex += 3;
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_BYTE, currentBufferIndex);
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 	currentBufferIndex += 3;
-
-	//Draw piece
-	gl.uniform4fv (colorLoc, colors[2]);
-	for (let i = 0; i < piece.length*2 - 4; i++){
-		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_BYTE, currentBufferIndex + i*3 );
-		tempBufferIndex += 3;
-	}
-	currentBufferIndex += tempBufferIndex;
-	tempBufferIndex = 0;
-
-	if (loopdebug2++ < 3) 
-		console.log("Before dice: ", currentBufferIndex, "Need to draw: ", 72, "Index Size: ", indices.length, "B+D=", currentBufferIndex + 72);
 
 	//Draw dice
 	gl.uniform4fv(colorLoc, colors[5]);
-	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, currentBufferIndex); //dice1
+	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, currentBufferIndex); //dice1
 	currentBufferIndex += 36;
-	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_BYTE, currentBufferIndex); //dice2
+	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, currentBufferIndex); //dice2
 	currentBufferIndex += 36;
+
+	//Draw black pieces
+	
+	gl.uniform4fv (colorLoc, colors[2]);
+	for (let j = 0; j < ( 15 * ((pieceSides - 1) * 4)); j++) {
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		currentBufferIndex += 3;
+	}
+
+	//Draw red pieces
+
+	gl.uniform4fv (colorLoc, colors[3]);
+	for (let j = 0; j < ( 15 * ((pieceSides - 1) * 4)); j++) {
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		currentBufferIndex += 3;
+	}
 
 	requestAnimFrame(render);
 };
@@ -462,19 +528,16 @@ function drawShape3D(x, y, z, length, sides, fullAngle, startAngle) {
 //gameBoard[1] is white's home space
 //gameBoard[26] is black's home space
 //gameBoard[27] is white's bar space
-
-//color 0 is black
-//color 1 is white
 function initializeBoard() {
 	gameBoard = [];
-	gameBoard[2] = {color:0,amount:2};
-	gameBoard[7] = {color:1,amount:5};
-	gameBoard[9] = {color:1,amount:3};
-	gameBoard[13] = {color:0,amount:5};
-	gameBoard[14] = {color:1,amount:5};
-	gameBoard[18] = {color:0,amount:3};
-	gameBoard[20] = {color:0,amount:5};
-	gameBoard[25] = {color:1,amount:2};
+	gameBoard[2]  = {black:false,amount:2};
+	gameBoard[7]  = {black:true,amount:5};
+	gameBoard[9]  = {black:true,amount:3};
+	gameBoard[13] = {black:false,amount:5};
+	gameBoard[14] = {black:true,amount:5};
+	gameBoard[18] = {black:false,amount:3};
+	gameBoard[20] = {black:false,amount:5};
+	gameBoard[25] = {black:true,amount:2};
 }
 
 
@@ -491,73 +554,116 @@ function c_time() {
 	return (new Date().getTime());
 }
 
-//////////////// Dice stuff
+// Dices + Pieces stuff -> how we get the verticies in the right place without changing indexes
 
 // Vertices + Dice vertices
 function getVertices() {
 	let dice1 = dice_init.slice(), dice2 = dice_init.slice();
 	//if no start time -> not been rolled yet. put in a default position
-	if (!(dice.startTime)) {
-		//add dice1
+	if ( !(dice.startTime) || !dice.active) {
 		return vertices
-			.concat( translateDice(dice1, 4, boardHeight + (diceHeight / 2), 5) )
-			.concat( translateDice(dice2, 6, boardHeight + (diceHeight / 2), 5) );
+			.concat( translateObject(dice1, 4, boardHeight + diceHeight, 5) )
+			.concat( translateObject(dice2, 6, boardHeight + diceHeight, 5) )
+			.concat( getBlackPieces() )
+			.concat( getRedPieces() );
 	}
 	else {
-		console.log("Compute dice animation frame");
-		return vertices;
+		let time = dice.lastTime - dice.startTime;
+		let f1 = dice.getFrame(time, dice.animate),
+			f2 = dice.getFrame(time, dice.animate2);
+
+		calculateDice(dice1, f1)
+		calculateDice(dice2, f2)
+
+		return vertices
+			.concat( dice1 )
+			.concat( dice2 )
+			.concat( getBlackPieces() )
+			.concat( getRedPieces() );
+	}
+
+	//gets verticies of all black pieces
+	function getBlackPieces() {
+		let pieces = [];
+		for (let i = 0; i < 15; i++) {
+			pieces = pieces.concat(
+				translateObject(piece.slice(), i / 2, 5, 10 - Math.floor(i / 5))
+			);
+		}
+		return pieces;
+	}
+
+	function getRedPieces() {
+		let pieces = [];
+		for (let i = 0; i < 15; i++) {
+			pieces = pieces.concat(
+				translateObject(piece.slice(), i / 2, 5, 10 - Math.floor(i / 5))
+			);
+		}
+		return pieces;
+	}
+
+	//rotate and translate dice based on frame spec
+	function calculateDice(d, frame) {
+		rotateObjectX(d, frame.xr);
+		rotateObjectY(d, frame.yr);
+		rotateObjectZ(d, frame.zr);
+		translateObject(d, frame.xv, frame.yv, frame.zv);
+		//console.log("Frame: ", JSON.stringify(frame));
 	}
 
 	// Here are some functions to do translation / rotation since I don't want to use a matrix library and it's easier to just write these based on a matrix than use an actual m4 device
 
 	// Translates a dice
-	function translateDice(d, x, y, z) {
+	function translateObject(d, x, y, z) {
 		for (i = 0; i < d.length; i++) {	
 			d[i] = vec4(d[i][0] + x, d[i][1] + y, d[i][2] + z, d[i][3]);
 		}
-		if (loopdebug++ < 5)
-			console.log("Dice:", JSON.stringify(d), "(x,y,z): ", x, y, z);
+		//if (loopdebug++ < 5) console.log("Dice:", JSON.stringify(d), "(x,y,z): ", x, y, z);
 		return d;
 	}
 
 	// Rotates t times around x-axis
-	function rotateDiceX(d, t) {
+	function rotateObjectX(d, t) {
 		let r = (2 * t) * Math.PI;
-		let c = Math.cos(), s = Math.sin(r);
+		let c = Math.cos(r), s = Math.sin(r);
 		for (i = 0; i < d.length; i++) {
-			d[i] = vec4(
+			d[i] = [
 				d[i][0],
 				(d[i][1]*c) + (d[i][2]*s),
 				(d[i][1]*-s) + (d[i][2]*c),
-				d[i][3]);
+				d[i][3]
+			];
 		}
 		return d;
 	}
 
 	// Rotates t times around y-axis
-	function rotateDiceY(d, t) {
+	function rotateObjectY(d, t) {
 		let r = (2 * t) * Math.PI;
-		let c = Math.cos(), s = Math.sin(r);
+		let c = Math.cos(r), s = Math.sin(r);
 		for (i = 0; i < d.length; i++) {
-			d[i] = vec4(
+			d[i] = [
 				(d[i][0]*c) + (d[i][2]*-s),
 				d[i][1],
 				(d[i][0]*s) + (d[i][2]*c),
-				d[i][3]);
+				d[i][3]
+			];
 		}
 		return d;
 	}
 
 	// Rotates t times around z-axis
-	function rotateDiceZ(d, t) {
+	function rotateObjectZ(d, t) {
 		let r = (2 * t) * Math.PI;
-		let c = Math.cos(), s = Math.sin(r);
+		let c = Math.cos(r), s = Math.sin(r);
 		for (i = 0; i < d.length; i++) {
-			d[i] = vec4(
+			d[i] = [
 				(d[i][0]*c) + (d[i][1]*-s),
 				(d[i][0]*s) + (d[i][1]*c),
 				d[i][2],
-				d[i][3]);
+				d[i][3]
+			];
 		}
 		return d;
 	}
