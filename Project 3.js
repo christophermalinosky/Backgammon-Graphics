@@ -296,8 +296,8 @@ window.onload = function init()
 
 	// Set pieces indicies
 	
-	var input = document.getElementById("horizontalSlider");
-	var input1 = document.getElementById("verticalSlider");
+	var input = document.getElementById("verticalSlider");
+	var input1 = document.getElementById("horizontalSlider");
 
 	theta[0] = (360)*(input.value/1000);
 	theta[1] = 0;
