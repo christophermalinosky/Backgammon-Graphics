@@ -140,15 +140,21 @@ var aspect;
 var piece = [];
 var pieceSides = 20;
 var pieceHeight = 0.5;
+var pieceRadius = 0.35;
+var pieceWidth = pieceRadius*2;
 piece.push(vec4(0,pieceHeight,0,1));
-piece = piece.concat(drawShape3D(0, pieceHeight, 0, 0.5, pieceSides, 2*Math.PI, 0));
+piece = piece.concat(drawShape3D(0, pieceHeight, 0, pieceRadius, pieceSides, 2*Math.PI, 0));
 piece.push(vec4(0,0,0,1));
-piece = piece.concat(drawShape3D(0, 0, 0, 0.5, pieceSides, 2*Math.PI, 0));
+piece = piece.concat(drawShape3D(0, 0, 0, pieceRadius, pieceSides, 2*Math.PI, 0));
 
 var hoverSpace = 2;
 var selectedSpace = null;
 
 var gameBoard = [];
+
+let triangleWidth = boardSideLength/14;
+let triangleHeight = triangleWidth*5;
+let triangleZ = boardHeight + 0.01;
 
 window.onload = function init()
 {
@@ -171,11 +177,6 @@ window.onload = function init()
 	   vec4(boardSideLength, boardHeight, 0.0, 1.0),
 	   vec4(boardSideLength, 0.0, 0.0, 1.0)
 	];
-
-
-	let triangleWidth = boardSideLength/14;
-	let triangleHeight = triangleWidth*5;
-	let triangleZ = boardHeight + 0.01;
 
 	//Add vertices for top triangles
 	vertices.push(vec4(triangleWidth,triangleZ,triangleWidth,1.0));
@@ -582,23 +583,51 @@ function getVertices() {
 			.concat( getRedPieces() );
 	}
 
-	//gets verticies of a5ll black pieces
+	//gets verticies of all black pieces
 	function getBlackPieces() {
 		let pieces = [];
-		for (let i = 0; i < 15; i++) {
-			pieces = pieces.concat(
-				translateObject(piece.slice(), 2, 2, 2)
-			);
+		for (let i = 0; i < 28; i++) {
+			if(gameBoard[i] !== undefined && gameBoard[i].black){
+				for(let j = 0; j < gameBoard[i].amount; j++){
+					if(i === 0){
+						pieces = pieces.concat(
+							translateObject(piece.slice(), 7.5*triangleWidth, boardHeight+j*pieceHeight, 0.5*pieceWidth)
+						);
+					} else if(i < 14){
+						pieces = pieces.concat(
+							translateObject(piece.slice(), (i-0.5)*triangleWidth, boardHeight+Math.floor(j/5)*pieceHeight, triangleWidth + ((j%5)+0.5)*pieceWidth)
+						);
+					} else {
+						pieces = pieces.concat(
+							translateObject(piece.slice(), ((26-i) + 0.5)*triangleWidth, boardHeight+Math.floor(j/5)*pieceHeight, boardSideLength - (triangleWidth + ((j%5)+0.5)*pieceWidth))
+						);
+					}
+				}
+			}
 		}
 		return pieces;
 	}
 
 	function getRedPieces() {
 		let pieces = [];
-		for (let i = 0; i < 15; i++) {
-			pieces = pieces.concat(
-				translateObject(piece.slice(), i / 2, 5, 10 - Math.floor(i / 5))
-			);
+		for (let i = 0; i < 28; i++) {
+			if(gameBoard[i] !== undefined && !gameBoard[i].black){
+				for(let j = 0; j < gameBoard[i].amount; j++){
+					if(i === 27){
+						pieces = pieces.concat(
+							translateObject(piece.slice(), 7.5*triangleWidth, boardHeight+j*pieceHeight, boardSideLength - 0.5*pieceWidth)
+						);
+					} else if(i < 14){
+						pieces = pieces.concat(
+							translateObject(piece.slice(), (i-0.5)*triangleWidth, boardHeight+Math.floor(j/5)*pieceHeight, triangleWidth + ((j%5)+0.5)*pieceWidth)
+						);
+					} else {
+						pieces = pieces.concat(
+							translateObject(piece.slice(), ((26-i) + 0.5)*triangleWidth, boardHeight+Math.floor(j/5)*pieceHeight, boardSideLength - (triangleWidth + ((j%5)+0.5)*pieceWidth))
+						);
+					}
+				}
+			}
 		}
 		return pieces;
 	}
