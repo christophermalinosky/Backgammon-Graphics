@@ -354,22 +354,66 @@ window.onload = function init()
 	window.onkeyup = function(e) {
 	   var keyCode = e.keyCode ? e.keyCode : e.which;
 	   if (keyCode === 37) { //left
-	   		if(hoverSpace !== 0){
+	   		if(hoverSpace !== 0 &&
+	   			(selectedSpace === null  || (selectedSpace - hoverSpace) < 6
+	   			|| ((selectedSpace === 27) && (selectedSpace - hoverSpace) < 7))){
 	   			hoverSpace--;
 	   		}
 	   } else if (keyCode === 39) { //right
-	       if(hoverSpace !== 25){
+	   	console.log(hoverSpace - selectedSpace);
+	   		if(hoverSpace !== 27 &&
+	   			(selectedSpace === null  || (hoverSpace - selectedSpace) < 6
+	   			|| ((selectedSpace === 0) && (hoverSpace - selectedSpace) < 7))){
 	   			hoverSpace++;
 	   		}
 	   } else if (keyCode === 13) { //enter
 	   		if(selectedSpace === null){
 	   			selectedSpace = hoverSpace;
 	   		} else {
-	   			//do a movement
+	   			if(gameBoard[selectedSpace] === undefined  || selectedSpace === 1 || selectedSpace === 26){
+	   				//do nothing
+	   			} else if(hoverSpace === 0 || hoverSpace === 27){
+	   				//error
+	   			} else if (gameBoard[hoverSpace] === undefined){
+	   				gameBoard[hoverSpace] = {black:gameBoard[selectedSpace].black,amount:1};
+	   				if(gameBoard[selectedSpace] === 1){
+	   					gameBoard[selectedSpace] = undefined;
+	   				} else {
+	   					gameBoard[selectedSpace].amount = gameBoard[selectedSpace].amount - 1;
+	   				}
+	   			} else {
+	   				if(gameBoard[hoverSpace].black === gameBoard[selectedSpace].black){
+	   					gameBoard[hoverSpace].amount = gameBoard[hoverSpace].amount + 1;
+	   					if(gameBoard[selectedSpace] === 1){
+	   						gameBoard[selectedSpace] = undefined;
+	   					} else {
+	   						gameBoard[selectedSpace].amount = gameBoard[selectedSpace].amount - 1;
+	   					}
+	   				} else {
+	   					if(gameBoard[hoverSpace].amount === 1){
+	   						let barIndex = 27;
+	   						if(gameBoard[hoverSpace].black){
+	   							barIndex = 0;
+	   						}
+	   						if(gameBoard[barIndex] === undefined){
+	   							gameBoard[barIndex] = {black:gameBoard[hoverSpace].black,amount:1};
+	   						} else {
+	   							gameBoard[barIndex].amount = gameBoard[barIndex].amount + 1;
+	   						}
+	   						gameBoard[hoverSpace] = {black:gameBoard[selectedSpace].black,amount:1};
+	   						if(gameBoard[selectedSpace] === 1){
+	   							gameBoard[selectedSpace] = undefined;
+	   						} else {
+	   							gameBoard[selectedSpace].amount = gameBoard[selectedSpace].amount - 1;
+	   						}
+	   					} else {
+	   						//error
+	   					}
+	   				}
+	   			}
 	   			selectedSpace = null;
 	   		}
 	   }
-	   console.log(35-hoverSpace);
 	}
 
     //  Load shaders and initialize attribute buffers
