@@ -342,6 +342,11 @@ window.onload = function init()
 			input1.value = 500;
 		});
 
+	document.getElementById("Reset")
+		.addEventListener("click", function() {
+			initializeBoard();
+		});
+
 	// Set up slider key listenters
 	input.addEventListener("input", function() {
 			theta[0] = (360)*(input.value/1000);
@@ -353,13 +358,13 @@ window.onload = function init()
 	// Set up key listener
 	window.onkeyup = function(e) {
 	   var keyCode = e.keyCode ? e.keyCode : e.which;
-	   if (keyCode === 37) { //left
+	   if (keyCode === 37 || keyCode === 68) { //left or d
 	   		if(hoverSpace !== 0 &&
 	   			(selectedSpace === null  || (selectedSpace - hoverSpace) < 6
 	   			|| ((selectedSpace === 27) && (selectedSpace - hoverSpace) < 7))){
 	   			hoverSpace--;
 	   		}
-	   } else if (keyCode === 39) { //right
+	   } else if (keyCode === 39 || keyCode === 65) { //right or a
 	   	console.log(hoverSpace - selectedSpace);
 	   		if(hoverSpace !== 27 &&
 	   			(selectedSpace === null  || (hoverSpace - selectedSpace) < 6
