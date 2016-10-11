@@ -295,9 +295,12 @@ window.onload = function init()
 
 	// Set pieces indicies
 	
-	theta[0] = 0.0;
-	theta[1] = 0.0;
-	theta[2] = 0.0;
+	var input = document.getElementById("horizontalSlider");
+	var input1 = document.getElementById("verticalSlider");
+
+	theta[0] = (360)*(input.value/1000);
+	theta[1] = 0;
+	theta[2] = (360)*(input1.value/1000);
 	
     //
     //  Configure WebGL
@@ -312,26 +315,6 @@ window.onload = function init()
 	//
 	// Set event listeners
 	//
-	document.getElementById("XButton")
-		.addEventListener ("click", function() { 
-			axis = xAxis; 
-		});
-	document.getElementById("YButton")
-		.addEventListener ("click", function () { 
-			axis = yAxis; 
-		});
-	document.getElementById("ZButton")
-		.addEventListener ("click", function () { 
-			axis = zAxis; 
-		});
-	document.getElementById("Pause")
-		.addEventListener ("click", function () { 
-			axis = null; 
-		});
-	document.getElementById("Reset")
-		.addEventListener ("click", function () { 
-			theta = [0.0, 0.0, 0.0]; axis = xAxis 
-		});
 	document.getElementById("Roll")
 		.addEventListener("click", function() {
 			dice.active = true;
@@ -340,6 +323,30 @@ window.onload = function init()
 				Math.floor((Math.random() * 6) + 1),
 				Math.floor((Math.random() * 6) + 1)
 			];
+		});
+
+	document.getElementById("Player1View")
+		.addEventListener("click", function() {
+			theta[0] = (360)*(100/1000);
+			theta[2] = (360)*(0/1000);
+			input.value = 100;
+			input1.value = 0;
+		});
+
+	document.getElementById("Player2View")
+		.addEventListener("click", function() {
+			theta[0] = (360)*(400/1000);
+			theta[2] = (360)*(500/1000);
+			input.value = 400;
+			input1.value = 500;
+		});
+
+	// Set up slider key listenters
+	input.addEventListener("input", function() {
+			theta[0] = (360)*(input.value/1000);
+		});
+	input1.addEventListener("input", function() {
+			theta[2] = (360)*(input1.value/1000);
 		});
 
 	// Set up key listener
@@ -391,9 +398,6 @@ window.onload = function init()
 function render()
 {
     gl.clear( gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-    //update board position
-	theta[axis] += 0.3;
 
 	//update dice if we need to - seperate function becuase theres a lot to do
 	if (dice.active)
