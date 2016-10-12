@@ -1,6 +1,3 @@
-var loopdebug = 0;
-var loopdebug2 = 0;
-
 var canvas;
 var gl;
 var colorLoc;
@@ -270,19 +267,16 @@ window.onload = function init()
 	for (let i = 0; i < 30; i++) { // index 30 pieces
 		base = (dice.vPos + 16) + (i * piece_vcount);
 		base2 = (base + 1) + pieceSides;
-		//console.log("Base: ", base, "\tBase2: ", base2);
 		for (let j = 1; j < pieceSides; j++) {
 			//top triangle
 			indices.push(base);
 			indices.push(base + j);
 			indices.push((base + 1) + j);
-			//console.log("TOP: (", base, ',', base + j, ',', base + j + 1, ")");
 
 			//bottom triangle
 			indices.push(base2);
 			indices.push(base2 + j);
 			indices.push(base2 + j + 1);
-			//console.log("BOT: (", base2, ',', base2 + j, ',', base2 + j + 1, ")");
 
 			//side rectangle (2x triangles)
 			indices.push(base + j);
@@ -292,7 +286,6 @@ window.onload = function init()
 			indices.push(base + j + 1);
 			indices.push(base2 + j);
 			indices.push(base2 + j + 1);
-			//console.log("SIDE: (", base + j, ',', base + j + 1, ',', base2 + j, ") (", base + j + 1, ',', base2 + j, ',', base2 + j + 1, ')');
 		}
 		//last side done seperately. We loop for (pieceSides - 1) triangles, which leaves one side unaccounte for
 		indices.push(base);
@@ -616,7 +609,8 @@ function c_time() {
 	return (new Date().getTime());
 }
 
-// Dices + Pieces stuff -> how we get the verticies in the right place without changing indexes
+// Dices + Pieces Methods -> how we determine the verticies.
+// A little complex, but it allows us to load our indecies into the buffer exactly once, even when we move our verticies. 
 
 // Vertices + Dice vertices
 function getVertices() {
@@ -669,6 +663,7 @@ function getVertices() {
 		return pieces;
 	}
 
+	//gets verticies of all red pieces
 	function getRedPieces() {
 		let pieces = [];
 		for (let i = 0; i < 28; i++) {
@@ -699,7 +694,6 @@ function getVertices() {
 		rotateObjectY(d, frame.yr);
 		rotateObjectZ(d, frame.zr);
 		translateObject(d, frame.xv, frame.yv, frame.zv);
-		//console.log("Frame: ", JSON.stringify(frame));
 	}
 
 	// Here are some functions to do translation / rotation since I don't want to use a matrix library and it's easier to just write these based on a matrix than use an actual m4 device
@@ -709,7 +703,6 @@ function getVertices() {
 		for (i = 0; i < d.length; i++) {	
 			d[i] = vec4(d[i][0] + x, d[i][1] + y, d[i][2] + z, d[i][3]);
 		}
-		//if (loopdebug++ < 5) console.log("Dice:", JSON.stringify(d), "(x,y,z): ", x, y, z);
 		return d;
 	}
 
