@@ -136,16 +136,18 @@ var projection;
 var modelView;
 var aspect;
 
-//design basic piece
-var piece = [];
+// Variables for describing pieces
 var pieceSides = 20;
 var pieceHeight = 0.5;
 var pieceRadius = 0.35;
 var pieceWidth = pieceRadius*2;
-piece.push(vec4(0,pieceHeight,0,1));
+
+// Create the "master" piece we copy for each displayed piece
+var piece = [];
 piece = piece.concat(drawShape3D(0, pieceHeight, 0, pieceRadius, pieceSides, 2*Math.PI, 0));
-piece.push(vec4(0,0,0,1));
 piece = piece.concat(drawShape3D(0, 0, 0, pieceRadius, pieceSides, 2*Math.PI, 0));
+
+console.log(piece);
 
 var hoverSpace = 2;
 var selectedSpace = null;
@@ -267,19 +269,21 @@ window.onload = function init()
 		piece_vcount = 2 + (2 * pieceSides);
 	for (let i = 0; i < 30; i++) { // index 30 pieces
 		base = (dice.vPos + 16) + (i * piece_vcount);
-		base2 = base + pieceSides + 1;
-		console.log("Base: ", base, "\tBase2: ", base2);
+		base2 = (base + 1) + pieceSides;
+		//console.log("Base: ", base, "\tBase2: ", base2);
 		for (let j = 1; j < pieceSides; j++) {
 			//top triangle
 			indices.push(base);
 			indices.push(base + j);
-			indices.push(base + j + 1);
-			console.log("TOP: (", base, ',', base + j, ',', base + j + 1, ")");
+			indices.push((base + 1) + j);
+			//console.log("TOP: (", base, ',', base + j, ',', base + j + 1, ")");
+
 			//bottom triangle
 			indices.push(base2);
 			indices.push(base2 + j);
 			indices.push(base2 + j + 1);
-			console.log("BOT: (", base2, ',', base2 + j, ',', base2 + j + 1, ")");
+			//console.log("BOT: (", base2, ',', base2 + j, ',', base2 + j + 1, ")");
+
 			//side rectangle (2x triangles)
 			indices.push(base + j);
 			indices.push(base + j + 1);
@@ -288,8 +292,16 @@ window.onload = function init()
 			indices.push(base + j + 1);
 			indices.push(base2 + j);
 			indices.push(base2 + j + 1);
-			console.log("SIDE: (", base + j, ',', base + j + 1, ',', base2 + j, ") (", base + j + 1, ',', base2 + j, ',', base2 + j + 1, ')');
+			//console.log("SIDE: (", base + j, ',', base + j + 1, ',', base2 + j, ") (", base + j + 1, ',', base2 + j, ',', base2 + j + 1, ')');
 		}
+		//last side done seperately. We loop for (pieceSides - 1) triangles, which leaves one side unaccounte for
+		indices.push(base);
+		indices.push(base + 1);
+		indices.push(base2);
+
+		indices.push(base + 1);
+		indices.push(base2);
+		indices.push(base2 + 1);
 	}
 
 	console.log(indices);
@@ -543,7 +555,7 @@ function render()
 	//Draw black pieces
 	
 	gl.uniform4fv (colorLoc, colors[2]);
-	for (let j = 0; j < ( 15 * ((pieceSides - 1) * 4)); j++) {
+	for (let j = 0; j < ( 15 * (((pieceSides - 1) * 4) + 2) ); j++) {
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 		currentBufferIndex += 6;
 	}
@@ -551,7 +563,7 @@ function render()
 	//Draw red pieces
 
 	gl.uniform4fv (colorLoc, colors[3]);
-	for (let j = 0; j < ( 15 * ((pieceSides - 1) * 4)); j++) {
+	for (let j = 0; j < ( 15 * (((pieceSides - 1) * 4) + 2) ); j++) {
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 		currentBufferIndex += 6;
 	}
@@ -566,9 +578,9 @@ function colorVecFromRGB(red, green, blue){
 function drawShape3D(x, y, z, length, sides, fullAngle, startAngle) {
     let shape = [];
     let disp = fullAngle / sides;
-    for(let i = 0; i < sides; i++){
+    for(let i = 0; i < sides; i++)
         shape.push(vec4(x + Math.cos(startAngle+disp*i)*length, y, z + Math.sin(startAngle+disp*i)*length, 1.0));
-    }
+    shape.push(shape[0]); //close off our circle
     return shape;
 }
 
