@@ -236,6 +236,27 @@ window.onload = function init()
 	vertices.push(vec4(triangleWidth,backgroundZ,boardSideLength - triangleWidth,1.0));
 	vertices.push(vec4(boardSideLength - triangleWidth,backgroundZ,boardSideLength - triangleWidth,1.0));
 
+	//Add verticies for selectors
+	vertices.push(vec4(0, backgroundZ, triangleWidth));
+	vertices.push(vec4(0, backgroundZ, triangleWidth + triangleHeight));
+	vertices.push(vec4(triangleWidth, backgroundZ, triangleWidth + triangleHeight));
+	vertices.push(vec4(triangleWidth, backgroundZ, triangleWidth));
+
+	vertices.push(vec4(0, backgroundZ, boardSideLength - triangleWidth - triangleHeight));
+	vertices.push(vec4(0, backgroundZ, boardSideLength - triangleWidth));
+	vertices.push(vec4(triangleWidth, backgroundZ, boardSideLength - triangleWidth));
+	vertices.push(vec4(triangleWidth, backgroundZ, boardSideLength - triangleWidth - triangleHeight));
+
+	vertices.push(vec4(7*triangleWidth, backgroundZ, 0));
+	vertices.push(vec4(7*triangleWidth, backgroundZ, triangleWidth));
+	vertices.push(vec4(8*triangleWidth, backgroundZ, triangleWidth));
+	vertices.push(vec4(8*triangleWidth, backgroundZ, 0));
+
+	vertices.push(vec4(7*triangleWidth, backgroundZ, boardSideLength - triangleWidth));
+	vertices.push(vec4(7*triangleWidth, backgroundZ, boardSideLength));
+	vertices.push(vec4(8*triangleWidth, backgroundZ, boardSideLength));
+	vertices.push(vec4(8*triangleWidth, backgroundZ, boardSideLength - triangleWidth));
+
 	//This is where dice vertices will go
 	dice.vPos = vertices.length;
 
@@ -290,6 +311,35 @@ window.onload = function init()
 	indices.push(60);
 	indices.push(61);
 	indices.push(59);
+
+	//Add selector indexes
+	indices.push(62);
+	indices.push(63);
+	indices.push(65);
+	indices.push(63);
+	indices.push(64);
+	indices.push(65);
+
+	indices.push(66);
+	indices.push(67);
+	indices.push(69);
+	indices.push(67);
+	indices.push(68);
+	indices.push(69);
+
+	indices.push(70);
+	indices.push(71);
+	indices.push(73);
+	indices.push(71);
+	indices.push(72);
+	indices.push(73);
+
+	indices.push(74);
+	indices.push(75);
+	indices.push(77);
+	indices.push(75);
+	indices.push(76);
+	indices.push(77);
 
 	// Dice indicies. 
 	//First elems of indices describe a cube, so we're just going to copy those and offset them
@@ -647,6 +697,56 @@ function render()
 	currentBufferIndex += 6;
 	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 	currentBufferIndex += 6;
+
+	//Draw selectors
+	if(selectedSpace === 1){
+		gl.uniform4fv (colorLoc, colors[5]);
+	} else if (hoverSpace === 1){
+		gl.uniform4fv (colorLoc, colors[4]);
+	} else {
+		gl.uniform4fv (colorLoc, colors[0]);
+	}
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+
+	if(selectedSpace === 26){
+		gl.uniform4fv (colorLoc, colors[5]);
+	} else if (hoverSpace === 26){
+		gl.uniform4fv (colorLoc, colors[4]);
+	} else {
+		gl.uniform4fv (colorLoc, colors[0]);
+	}
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+
+	if(selectedSpace === 0){
+		gl.uniform4fv (colorLoc, colors[5]);
+	} else if (hoverSpace === 0){
+		gl.uniform4fv (colorLoc, colors[4]);
+	} else {
+		gl.uniform4fv (colorLoc, colors[0]);
+	}
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+
+	if(selectedSpace === 27){
+		gl.uniform4fv (colorLoc, colors[5]);
+	} else if (hoverSpace === 27){
+		gl.uniform4fv (colorLoc, colors[4]);
+	} else {
+		gl.uniform4fv (colorLoc, colors[0]);
+	}
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+	currentBufferIndex += 6;
+
 
 	//Set to drawing based on textures
 	gl.uniform1i(uTexture, 1); //dice
