@@ -5,25 +5,33 @@
 <title>Project 3</title>
 <script id="vertex-shader" type="x-shader/x-vertex">
 attribute vec4 vPosition;
+attribute vec2 aTextureCoord;
+
 uniform   mat4 modelView;
 uniform   mat4 projection;
+
+varying highp vec2 vTextureCoord;
 
 void
 main()
 {
     gl_Position = projection * modelView * vPosition;
+    vTextureCoord = aTextureCoord;
 }
 </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
+varying highp vec2 vTextureCoord;
+
 precision mediump float;
-   
+
 uniform vec4 color;
+uniform sampler2D uTexture;
 
 void
 main()
 {
-    gl_FragColor = color;
+    gl_FragColor =  texture2D(uTexture, vTextureCoord) * color;
 }
 </script>
 
@@ -49,4 +57,6 @@ Oops ... your browser doesn't support the HTML5 canvas element
 <button id="Reset" type="submit">Reset Board</button>
 </p>
 </body>
+	<!-- Specify our dice texture here. Since it's using a data URI, it can get around the browsers x-origin restriction -->
+	<img id="dice-texture" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAABACAYAAADS1n9/AAAH7klEQVR4nO1cT0wTTxT++od6UQsqWiQhHowSQ0naRiHGxgDiwcRyN5qo8WL0wBVjAknRaJSQgMQDBE0MHsQTBC7igUAiRiiJgCUkkIC0Eoryp16k7b7f4Zc2lN3t7kLp7NL9kl72vXnf293XnZk3M88AgKCDJQwsyc0AEA6HcfDgwYwS//37F4cOHYLOzxZG1g7oYAs9ALIcegBkOcysHdgL9PT04P379wiFQnC73Xjw4AHy8/MV2QiFQmhra8PQ0BDy8/Nx48YNeDyePfKYLSgcDlOmEQ6HCf/PQNLK39TUlLAb/50+fZpCoZBs/lAoRGfOnOHZaWpqSpufW/iZY98EQCAQIKPRyHtxAKihoUE2f0NDg6ANo9FIgUAgLb6qJQD21RhgamoKHMcJyoaHh2XbEdPlOA5TU1M78k2t2FcBkGpefeTIEdl2UumqYe6eTuyrAHC5XCgtLRWU3bx5U7YdMd3S0lK4XK4d+aZm7JsxABHRzMwM2e32pH77xYsXivlfvnyZNJ6w2+00MzOTNj/VMgYw4P8HoDgV+u3bNwwMDAAAqqqqcOHCBUXt9zIVu7m5CZ/Ph/X1ddjtdpw8eXJH/MFgEBMTE7BarXA6nbBYLEny0dFRfPr0CRzHoaKiAhcvXpTt4xZ+pmsBwA7+gY2NjbwRcmNj407/AZr8Aj1//pz3DB49ekQcxynlZw5FD2BkZERwigSARkZGZNvRcgCMj4+LPoPBwUGl/EyheBD4+fPnHcn2E1LdZ7xb1ArSOgsgYh7QOhRCcQBUVlaKyq5cubIrZ7SCqqoqUZkWn4HiPtDr9fL6Pq/Xq8iGlscARETPnj3jPYO6ujrNDQJ3PA38+vVroi+srKxEeXm5ovappmE/f/6E3+9HXl4eHA4HzOb0L1qmYxoanwbGYjFUVlbypoHRaBTj4+NYXV1FcXExioqKhPi1Nw1MB4T+gRzHUUNDAxkMhoSsrKyMFhYWMsKfTiwsLFBZWVmCw2AwUH19feILoZYvAKCiAOjq6hKcWrndborFYnvOny7EYjFyu92C99LV1bWdnylUtRbw9u1bwetDQ0Pw+/2ZdWYX8Pv9GBoaEpSJ3SMrqCoAlpeXRWUbGxsZ9GR3CIfDorKVlZUMeiINVQVARUWF4HWLxYLi4uIMe7NznD17lrduEMfly5cz7I00VDMGWFxcJJvNxus329vbM8KfTrS3t/Puw2az0eLi4nZ+plDVptDCwkKMjY3h1atXGBkZgc1mw+3bt3H16lXWrinGvXv3cOrUKXR2dmJpaQnl5eV4+PCh4MokS+w4D7BbqOlkDmN+pnkAVY0BdGQeegBkOfQAyHIYoIKRaJZDHwPoYAe9PoAK+FlC/wJkOfQAyHLoAZDlEEwFLy0t4fXr1xgeHsbx48dx69YtXLt2TZHh/v5+vHv3DsvLy7h06RLu378Pm80mqy1L/mAwiLa2Nnz58gUFBQW4c+cOb5/fv3//0NnZid7eXgDA9evXcffuXRw4cCBJb2BgAG/evMGvX79UmwoGti2GBINBKioq4i1ktLa2yl4IaW1t5bUvKiqiYDCY0BFbjGHJHwgEqKCggNe2o6Mj0S4SiVBNTQ1Pp6amhqLRaEKvo6ODp1NQUKC6xSBg2wuoq6sT3MliMploZWVF8uGHQiEymUyCNurq6iQDgCV/bW2tYDuLxUJ//vwhIqKenh7RQyG9vb1ERLS6ukoWi0VQp7a2VlUBwBsDiB16iMVimJiYkDT4/ft3xGIxQZmcgyMs+QcHBwWvb25uYnp6GgAwNjYm2n50dBQAMD09jc3NTUUcrMALgFT9pNVqlTSYl5cnKjtx4oRke5b8x44dE5UdPnwYAJCbmyuqE5elmt+n4mCFpE9wd3e34KfL5XIl9XFiiEaj5HK5BG18+PBBsgtgyS9nU+rs7CyZzWaejtlsptnZWSLS1qZQYNsL4DiOvF5v0tl4h8ORuDk5mJ2dJYfDkWhvNBrJ6/UmHZoQCwCW/BzHUX19PW9b+vz8fJL9vr4+slqtCR2r1Up9fX1JOvPz84LbwuOBpJYAEN0QEggEMDk5idzcXDidTuTk5CgyHIlE4PP5sLa2hpKSEhQWFibJpVKxUvxS9Ql2w7+wsIAfP37g6NGjogdT1tfXE+MBl8sl2D3FD4b8/v0b586d0w+GbMVu9uTts/oEzMH6AWR7fQKm0FwqWK9PkF5oLgBSgfT6BIqhuQDQ6xOkF5oLgPLycni9Xt51r9eLsrIyBh5pG6IHQ/Z6GiiFVPyPHz9GdXV1yvoEu+GXU59gY2MjaRoYzxRuRar6AGoCLxHz9OnTpESM0+lUnIjZmo0zGo305MkT2YkgVvxy6xP09/dLJoI0Wx/g48ePu07Fnj9/XtBGd3e3ZACw5JeTCp6bm6OcnByeTk5ODs3NzRGRxlPBHo9HdJ49Pj4u+QJ8Pp9oe4/HIxkALPmrq6tF205OThIRUXNzs6hOc3MzERFNTk6K6lRXV6sqAHiDwKWlJVHltbU1SYOrq6uislS21cAvpz5BKh/iMk3XBxArgWYymVBSUiJpsLS0FCaTSVAmdv5fLfxy6hOkqhYel2m6PoDYlqyWlhbJz28cLS0tvPa73RKWCX459QkikYhgN7V9S5hW6gMIrgZmYlNmqtU4lvzBYFCyPoGSTaFi9QHUshqo1wdgz6+fDdTBDnoAZDn0AMhy6PUB2IPpGOA/F1efoPbPb/8AAAAASUVORK5CYII=" hidden>
 </html>

@@ -155,6 +155,13 @@ let triangleWidth = boardSideLength/14;
 let triangleHeight = triangleWidth*5;
 let triangleZ = boardHeight + 0.01;
 
+// textures here
+var diceTex,
+	whiteTex,
+	texCoords;
+
+var vBuffer, aTextureCoord, uTexture;
+
 window.onload = function init()
 {
     canvas = document.getElementById( "gl-canvas" );
@@ -163,6 +170,25 @@ window.onload = function init()
     if ( !gl ) { alert( "WebGL isn't available" ); }
 
     initializeBoard();
+
+    // Create dice texture
+    diceTex = gl.createTexture();
+	gl.activeTexture(gl.TEXTURE1);
+	gl.bindTexture(gl.TEXTURE_2D, diceTex);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById("dice-texture"));
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
+	gl.generateMipmap(gl.TEXTURE_2D);
+	//gl.bindTexture(gl.TEXTURE_2D, null);
+
+	// Create empty texture
+	gl.activeTexture(gl.TEXTURE0);
+	whiteTex = gl.createTexture();
+	gl.bindTexture(gl.TEXTURE_2D, whiteTex);
+	gl.texImage2D(gl.TEXTURE_2D, 
+		0, gl.RGBA, 1, 1, 0, gl.RGBA, 
+		gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
+	//gl.bindTexture(gl.TEXTURE_2D, null);
 
 	// Load vertices and colors for board faces
 	
@@ -390,7 +416,7 @@ window.onload = function init()
 	   					gameBoard[selectedSpace] = undefined;
 	   				} else {
 	   					gameBoard[selectedSpace].amount = gameBoard[selectedSpace].amount - 1;
-	   				}
+	   				}	
 	   			} else {
 	   				if(gameBoard[hoverSpace].black === gameBoard[selectedSpace].black){
 	   					gameBoard[hoverSpace].amount = gameBoard[hoverSpace].amount + 1;
@@ -435,7 +461,7 @@ window.onload = function init()
 	modelViewLoc = gl.getUniformLocation (program, "modelView");
 	projectionLoc  = gl.getUniformLocation (program, "projection");
 	
-    var vBuffer = gl.createBuffer();
+    vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(getVertices()), gl.STATIC_DRAW );
 
@@ -446,6 +472,48 @@ window.onload = function init()
 	var iBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
 	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+
+	var texCoordBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer, gl.STATIC_DRAW)
+	gl.bufferData(gl.ARRAY_BUFFER, 
+		new Float32Array([
+			// Front
+			0.0,  0.0,
+			1.0,  0.0,
+			1.0,  1.0,
+			0.0,  1.0,
+			// Back
+			0.0,  0.0,
+			1.0,  0.0,
+			1.0,  1.0,
+			0.0,  1.0,
+			// Top
+			0.0,  0.0,
+			1.0,  0.0,
+			1.0,  1.0,
+			0.0,  1.0,
+			// Bottom
+			0.0,  0.0,
+			1.0,  0.0,
+			1.0,  1.0,
+			0.0,  1.0,
+			// Right
+			0.0,  0.0,
+			1.0,  0.0,
+			1.0,  1.0,
+			0.0,  1.0,
+			// Left
+			0.0,  0.0,
+			1.0,  0.0,
+			1.0,  1.0,
+			0.0,  1.0
+		]), gl.STATIC_DRAW);
+
+	aTextureCoord = gl.getAttribLocation(program, "aTextureCoord");
+	gl.enableVertexAttribArray(aTextureCoord);
+	gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+
+	uTexture = gl.getUniformLocation(program, "uTexture");
 	
     render();
 };
@@ -458,7 +526,8 @@ function render()
 	if (dice.active)
 		rollDiceTick();
 
-	//update buffers
+	//update vertex buffer
+    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(getVertices()), gl.STATIC_DRAW );
 	
 	for (i=0; i<3; i++) {
@@ -499,10 +568,14 @@ function render()
 	gl.uniformMatrix4fv (modelViewLoc, false, flatten(modelView));
 	gl.uniformMatrix4fv (projectionLoc, false, flatten(projection));
 
+	//Set to drawing based on colors, not textures
+	gl.disableVertexAttribArray(aTextureCoord);
+	gl.uniform1i(uTexture, 0); //allwhite
+
 	//Draw board
 	let currentBufferIndex = 0;
 	let tempBufferIndex = 0;
-	gl.uniform4fv (colorLoc, colors[0]);
+	gl.uniform4fv(colorLoc, colors[0]);
 	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, 0);
 	currentBufferIndex = 36*2;
 
@@ -532,21 +605,29 @@ function render()
 	tempBufferIndex = 0;
 
 	//Draw background
-	gl.uniform4fv (colorLoc, colors[1]);
+	gl.uniform4fv(colorLoc, colors[1]);
 	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 	currentBufferIndex += 6;
 	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
 	currentBufferIndex += 6;
 
+	//Set to drawing based on textures
+	gl.uniform1i(uTexture, 1); //dice
+	//gl.enableVertexAttribArray(aTextureCoord);
+	gl.uniform4fv(colorLoc, colors[1]); //WHITE
+
 	//Draw dice
-	gl.uniform4fv(colorLoc, colors[5]);
+	//gl.uniform4fv(colorLoc, colors[5]);
 	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, currentBufferIndex); //dice1
 	currentBufferIndex += 36*2;
 	gl.drawElements( gl.TRIANGLES, 36, gl.UNSIGNED_SHORT, currentBufferIndex); //dice2
 	currentBufferIndex += 36*2;
 
+	//Go back to drawing based on colors, not textures
+	gl.disableVertexAttribArray(aTextureCoord);
+	gl.uniform1i(uTexture, 0);
+
 	//Draw black pieces
-	
 	gl.uniform4fv (colorLoc, colors[2]);
 	for (let j = 0; j < ( 15 * (((pieceSides - 1) * 4) + 2) ); j++) {
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
@@ -554,7 +635,6 @@ function render()
 	}
 
 	//Draw red pieces
-
 	gl.uniform4fv (colorLoc, colors[3]);
 	for (let j = 0; j < ( 15 * (((pieceSides - 1) * 4) + 2) ); j++) {
 		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
@@ -598,7 +678,6 @@ function initializeBoard() {
 
 // Does one animation tick for the dice roll animation. Only called if dice are actively rolling
 function rollDiceTick() {
-	console.log("Dice roll tick");
 	//do animation stuff
 	dice.lastTime = c_time();
 	dice.active = (dice.aniLength > (dice.lastTime - dice.startTime));
@@ -608,6 +687,7 @@ function rollDiceTick() {
 function c_time() {
 	return (new Date().getTime());
 }
+
 
 // Dices + Pieces Methods -> how we determine the verticies.
 // A little complex, but it allows us to load our indecies into the buffer exactly once, even when we move our verticies. 
