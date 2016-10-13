@@ -701,51 +701,47 @@ function render()
 	//Draw selectors
 	if(selectedSpace === 1){
 		gl.uniform4fv (colorLoc, colors[5]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	} else if (hoverSpace === 1){
 		gl.uniform4fv (colorLoc, colors[4]);
-	} else {
-		gl.uniform4fv (colorLoc, colors[0]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	}
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
+	currentBufferIndex += 12;
 
 	if(selectedSpace === 26){
 		gl.uniform4fv (colorLoc, colors[5]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	} else if (hoverSpace === 26){
 		gl.uniform4fv (colorLoc, colors[4]);
-	} else {
-		gl.uniform4fv (colorLoc, colors[0]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	}
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
+	currentBufferIndex += 12;
 
 	if(selectedSpace === 0){
 		gl.uniform4fv (colorLoc, colors[5]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	} else if (hoverSpace === 0){
 		gl.uniform4fv (colorLoc, colors[4]);
-	} else {
-		gl.uniform4fv (colorLoc, colors[0]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	}
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
+	currentBufferIndex += 12;
 
 	if(selectedSpace === 27){
 		gl.uniform4fv (colorLoc, colors[5]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	} else if (hoverSpace === 27){
 		gl.uniform4fv (colorLoc, colors[4]);
-	} else {
-		gl.uniform4fv (colorLoc, colors[0]);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
+		gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex + 6);
 	}
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
-	gl.drawElements( gl.TRIANGLES, 3, gl.UNSIGNED_SHORT, currentBufferIndex);
-	currentBufferIndex += 6;
+	currentBufferIndex += 12;
 
 
 	//Set to drawing based on textures
