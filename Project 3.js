@@ -160,7 +160,18 @@ var diceTex,
 	whiteTex,
 	texCoords;
 
-var vBuffer, aTextureCoord, uTexture;
+var aTextureCoord, uTexture, vNormal, texCoordBuffer, nBuffer, vBuffer, colorLoc;
+
+// Lighting spooky constants
+var lightPosition = vec4(5.0, -15.0, 5.0, 0.0 );
+var lightAmbient = vec4(0.2, 0.2, 0.2, 1.0 );
+var lightDiffuse = vec4( 1.0, 1.0, 1.0, 1.0 );
+var lightSpecular = vec4( 1.0, 1.0, 1.0, 1.0 );
+
+var materialAmbient = vec4( 1.0, 1.0, 1.0, 1.0 );
+var materialDiffuse = vec4( 0.2, 0.2, 0.2, 1.0 );
+var materialSpecular = vec4( 0.6, 0.6, 0.6, 1.0 );
+var materialShininess = 60.0;
 
 window.onload = function init()
 {
@@ -461,19 +472,35 @@ window.onload = function init()
 	modelViewLoc = gl.getUniformLocation (program, "modelView");
 	projectionLoc  = gl.getUniformLocation (program, "projection");
 	
+	// Lighting
+    var ambientProduct = mult(lightAmbient, materialAmbient);
+    var diffuseProduct = mult(lightDiffuse, materialDiffuse);
+    var specularProduct = mult(lightSpecular, materialSpecular);
+
+    // Vertices
     vBuffer = gl.createBuffer();
     gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
     gl.bufferData( gl.ARRAY_BUFFER, flatten(getVertices()), gl.STATIC_DRAW );
 
+    // Pos
     var vPosition = gl.getAttribLocation( program, "vPosition" );
     gl.vertexAttribPointer( vPosition, 4, gl.FLOAT, false, 0, 0 );
     gl.enableVertexAttribArray( vPosition );
+
+	// NORMALS
+	nBuffer = gl.createBuffer();
+	gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer);
+    
+    vNormal = gl.getAttribLocation( program, "vNormal" );
+    gl.vertexAttribPointer( vNormal, 4, gl.FLOAT, false, 0, 0 );
+    gl.enableVertexAttribArray( vNormal );
 	
+	// Indexing 
 	var iBuffer = gl.createBuffer();
 	gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
 	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-	var texCoordBuffer = gl.createBuffer();
+	texCoordBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer, gl.STATIC_DRAW)
 	gl.bufferData(gl.ARRAY_BUFFER, 
 		new Float32Array([
@@ -514,6 +541,17 @@ window.onload = function init()
 	gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
 	uTexture = gl.getUniformLocation(program, "uTexture");
+
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "ambientProduct"),flatten(ambientProduct) );
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "diffuseProduct"),flatten(diffuseProduct) );
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "specularProduct"),flatten(specularProduct) );	
+    gl.uniform4fv( gl.getUniformLocation(program, 
+       "lightPosition"),flatten(lightPosition) );
+    gl.uniform1f( gl.getUniformLocation(program, 
+       "shininess"),materialShininess );
 	
     render();
 };
@@ -527,8 +565,7 @@ function render()
 		rollDiceTick();
 
 	//update vertex buffer
-    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
-    gl.bufferData( gl.ARRAY_BUFFER, flatten(getVertices()), gl.STATIC_DRAW );
+	updateBuffers();
 	
 	for (i=0; i<3; i++) {
 		angles[i] = radians(theta[i]);
@@ -688,6 +725,43 @@ function c_time() {
 	return (new Date().getTime());
 }
 
+
+// inefficient but it was easier to implement more features this way :D 
+function updateBuffers() {
+	let verts = getVertices();
+    gl.bindBuffer( gl.ARRAY_BUFFER, vBuffer );
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(verts), gl.STATIC_DRAW );
+
+    let normals = [];
+    getAllNormals();
+
+    // update normal buffer
+    gl.bindBuffer( gl.ARRAY_BUFFER, nBuffer);
+    gl.bufferData( gl.ARRAY_BUFFER, flatten(normals), gl.STATIC_DRAW );
+
+    // update the texture mapp thing
+
+	function getAllNormals() {
+		let normal;
+		for (let i = 0; i < (indices.length / 3); i++) {
+			normal = getTriangleNormal(
+				verts[indices[i*3]],
+				verts[indices[i*3 + 1]],
+				verts[indices[i*3 + 2]]
+			);
+			normals.push( normal );
+			normals.push( normal );
+			normals.push( normal );
+		}
+
+	    // Calculate normal for a triangle
+		function getTriangleNormal(a, b, c) {
+			let v1 = subtract(b, a);
+		    let v2 = subtract(c, a);
+		    return vec4( normalize(cross(v2, v1)) );
+		}
+	}
+}
 
 // Dices + Pieces Methods -> how we determine the verticies.
 // A little complex, but it allows us to load our indecies into the buffer exactly once, even when we move our verticies. 

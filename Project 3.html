@@ -4,34 +4,68 @@
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
 <title>Project 3</title>
 <script id="vertex-shader" type="x-shader/x-vertex">
+precision mediump float;
+
 attribute vec4 vPosition;
+attribute vec4 vNormal;
 attribute vec2 aTextureCoord;
 
-uniform   mat4 modelView;
-uniform   mat4 projection;
+uniform mat4 modelView;
+uniform mat4 projection;
+uniform vec4 lightPosition;
 
 varying highp vec2 vTextureCoord;
+varying vec3 N, L, E;
 
 void
 main()
 {
+	vec3 pos = -(modelView * vPosition).xyz;
+    vec3 light = lightPosition.xyz;
+    L = normalize( light - pos );
+    E =  -pos;
+    N = normalize( (modelView*vNormal).xyz);
     gl_Position = projection * modelView * vPosition;
     vTextureCoord = aTextureCoord;
 }
 </script>
 
 <script id="fragment-shader" type="x-shader/x-fragment">
-varying highp vec2 vTextureCoord;
-
 precision mediump float;
+
+varying highp vec2 vTextureCoord;
+varying vec3 N, L, E;
 
 uniform vec4 color;
 uniform sampler2D uTexture;
 
+uniform vec4 ambientProduct;
+uniform vec4 diffuseProduct;
+uniform vec4 specularProduct;
+uniform float shininess;
+
 void
 main()
 {
-    gl_FragColor =  texture2D(uTexture, vTextureCoord) * color;
+	// compute our shading
+	vec4 fColor;
+    
+    vec3 H = normalize( L + E );
+    vec4 ambient = ambientProduct;
+
+    float Kd = max( dot(L, N), 0.0 );
+    vec4  diffuse = Kd*diffuseProduct;
+
+    float Ks = pow( max(dot(N, H), 0.0), shininess );
+    vec4  specular = Ks * specularProduct;
+    
+    if( dot(L, N) < 0.0 ) specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+    fColor = ambient + diffuse +specular;
+    fColor.a = 1.0;
+
+    // set frag color
+    gl_FragColor =  texture2D(uTexture, vTextureCoord) * color * fColor;
 }
 </script>
 
