@@ -1,3 +1,8 @@
+/* 
+	Author: Andrew McKee
+	Author: Chris Malinosky
+								*/
+
 var canvas;
 var gl;
 var colorLoc;
