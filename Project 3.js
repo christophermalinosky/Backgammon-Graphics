@@ -17,6 +17,7 @@ var s = [];
 // more info stored, but not initialized here
 // dice default position: <4 or 6>, boardHeight + diceHeight = 2.4, 5
 var dice = {
+	audio: new Audio('dice.wav'),
 	active: false,	//are dice rolling?
 	rolled: [6 , 6], //rolled value
 	aniLength: 2000,
@@ -190,7 +191,6 @@ window.onload = function init()
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_NEAREST);
 	gl.generateMipmap(gl.TEXTURE_2D);
-	//gl.bindTexture(gl.TEXTURE_2D, null);
 
 	// Create empty texture
 	gl.activeTexture(gl.TEXTURE0);
@@ -199,7 +199,6 @@ window.onload = function init()
 	gl.texImage2D(gl.TEXTURE_2D, 
 		0, gl.RGBA, 1, 1, 0, gl.RGBA, 
 		gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
-	//gl.bindTexture(gl.TEXTURE_2D, null);
 
 	// Load vertices and colors for board faces
 	
@@ -410,6 +409,7 @@ window.onload = function init()
 	//
 	document.getElementById("Roll")
 		.addEventListener("click", function() {
+			dice.audio.play();
 			dice.active = true;
 			dice.startTime = c_time();
 			dice.rolled = [
@@ -550,45 +550,14 @@ window.onload = function init()
 	gl.bindBuffer( gl.ELEMENT_ARRAY_BUFFER, iBuffer);
 	gl.bufferData( gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
 
-	texCoordBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer, gl.STATIC_DRAW)
-	gl.bufferData(gl.ARRAY_BUFFER, 
-		new Float32Array([
-			// Front
-			0.0,  0.0,
-			1.0,  0.0,
-			1.0,  1.0,
-			0.0,  1.0,
-			// Back
-			0.0,  0.0,
-			1.0,  0.0,
-			1.0,  1.0,
-			0.0,  1.0,
-			// Top
-			0.0,  0.0,
-			1.0,  0.0,
-			1.0,  1.0,
-			0.0,  1.0,
-			// Bottom
-			0.0,  0.0,
-			1.0,  0.0,
-			1.0,  1.0,
-			0.0,  1.0,
-			// Right
-			0.0,  0.0,
-			1.0,  0.0,
-			1.0,  1.0,
-			0.0,  1.0,
-			// Left
-			0.0,  0.0,
-			1.0,  0.0,
-			1.0,  1.0,
-			0.0,  1.0
-		]), gl.STATIC_DRAW);
+	// texCoordBuffer = gl.createBuffer();
+	// gl.bindBuffer(gl.ARRAY_BUFFER, texCoordBuffer, gl.STATIC_DRAW)
+	// gl.bufferData(gl.ARRAY_BUFFER, 
+	// 	new Float32Array(), gl.STATIC_DRAW);
 
-	aTextureCoord = gl.getAttribLocation(program, "aTextureCoord");
-	gl.enableVertexAttribArray(aTextureCoord);
-	gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
+	// aTextureCoord = gl.getAttribLocation(program, "aTextureCoord");
+	// gl.enableVertexAttribArray(aTextureCoord);
+	// gl.vertexAttribPointer(aTextureCoord, 2, gl.FLOAT, false, 0, 0);
 
 	uTexture = gl.getUniformLocation(program, "uTexture");
 
@@ -656,7 +625,7 @@ function render()
 	gl.uniformMatrix4fv (projectionLoc, false, flatten(projection));
 
 	//Set to drawing based on colors, not textures
-	gl.disableVertexAttribArray(aTextureCoord);
+	// gl.disableVertexAttribArray(aTextureCoord);
 	gl.uniform1i(uTexture, 0); //allwhite
 
 	//Draw board
@@ -757,7 +726,7 @@ function render()
 	currentBufferIndex += 36*2;
 
 	//Go back to drawing based on colors, not textures
-	gl.disableVertexAttribArray(aTextureCoord);
+	// gl.disableVertexAttribArray(aTextureCoord);
 	gl.uniform1i(uTexture, 0);
 
 	//Draw black pieces
@@ -814,6 +783,9 @@ function rollDiceTick() {
 	//do animation stuff
 	dice.lastTime = c_time();
 	dice.active = (dice.aniLength > (dice.lastTime - dice.startTime));
+	if (!dice.active) {
+		document.getElementById("dice-result").innerText = "You rolled a " + dice.rolled[0] + " and a " + dice.rolled[1] + "!"
+	}
 }
 
 // Shorthand to get time as milliseconds since last epoch
